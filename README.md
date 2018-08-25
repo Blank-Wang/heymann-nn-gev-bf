@@ -24,12 +24,6 @@ and Inverse Covariance Matrices Using a Joint Penalty](https://stt.msu.edu/users
 - rir simulator(https://github.com/ehabets/RIR-Generator)
 - CHiME3's simulation code
 
-### to do
-- getting WSJCAM0, CHIME3, CHiME3 noise data
-
-- simulation (SNR, RT60, distance?)
-- training, dev, eval dataset
-
 ```sh
 # simulation with AudioLabs's image method rir
 make_clean_imm_rir.m rir/imm_clean.mat
@@ -39,18 +33,34 @@ simulate_noisy.m rir/imm_clean.mat data/wsjcam0/wav.scp data/imm_simu1
 # chime3 simulation
 simulate_chime3.m mypath/CHiME3/data mystorage/CHiME3/data
 
+# heymann
+# training: chime3 simulated training set (Clean, Noise) <- from modified CHiME3_simulate_data.m
+# dev: chime3 simulated dev set (Clean, Noise) <- from modified CHiME3_simulate_data.m
+
+# xueliang
+# training: chime3 simulated training set (6ch, 7138)
+# dev: chime3 simulated dev set (6ch, 4env, 1640(410 x 4))
+
 make_chime3_data.sh mystorage/CHiME3/data data/chime3
 
 ls data/chime3
-# dt05_simu dt05_real et05_simu et05_real
+# dt05_simu dt05_real et05_simu et05_real tr05_simu
 
-ls data/chime3/dt05_simu # all wavs are simulated (even if clean)
+ls data/chime3/tr05_simu
 # noise.wav.scp
 # clean.wav.scp
 # noisy.wav.scp
 
+make_dataset.sh data/chime3/tr05_simu
 make_dataset.sh data/chime3/dt05_simu
-# noise.wav.
+
+ls data/chime3/tr05_simu
+# noise.wav.scp
+# clean.wav.scp
+# noisy.wav.scp
+# noisy_abs_spectrum.ark noisy_abs_spectrum.scp
+# ibm_x.ark ibm_x.scp
+# ibm_n.ark ibm_n.scp
 
 fc/train.py fc/mytraincase1-1809xx/param.json
 fc/print_mdl.py fc/mytraincase1-1809xx/model.pth
