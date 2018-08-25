@@ -111,6 +111,12 @@ done
 
 # mylocal/make_rir.m # generate_mic_array_rir.m it's my lab's script. sorry...
 
+# note
+# add rir/iip/8ch*/ dir to mixed.csv and myloca/make_mixed_csv.py
+
+
+
+
 #
 for data in si_dt si_et si_tr; do
   mix.m ext/mixed/wsjcam0/$data/mixed.csv
