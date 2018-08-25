@@ -21,7 +21,8 @@ and Inverse Covariance Matrices Using a Joint Penalty](https://stt.msu.edu/users
 - matlab
 
 ### tools
-- RIR simulation code (google's, CHiME3, CHiME4)
+- rir simulator(https://github.com/ehabets/RIR-Generator)
+- CHiME3's simulation code
 
 ### to do
 - getting WSJCAM0, CHIME3, CHiME3 noise data
@@ -30,19 +31,26 @@ and Inverse Covariance Matrices Using a Joint Penalty](https://stt.msu.edu/users
 - training, dev, eval dataset
 
 ```sh
-simulate_chime3.m data/??? data/real_chime3
-simulate_google.m data/??? data/simu_ggrir
+# simulation with AudioLabs's image method rir
+make_clean_imm_rir.m rir/imm_clean.mat
+make_reverb_imm_rir.m rir/imm_reverb.mat
+simulate_noisy.m rir/imm_clean.mat data/wsjcam0/wav.scp data/imm_simu1
 
-ls data/simulated1 # all wavs are simulated (even if clean)
-# noise.scp
-# clean.scp
-# noisy.scp
+# chime3 simulation
+simulate_chime3.m mypath/CHiME3/data mystorage/CHiME3/data
 
+make_chime3_data.sh mystorage/CHiME3/data data/chime3
 
-make_dataset.sh data/real_chime
- 
+ls data/chime3
+# dt05_simu dt05_real et05_simu et05_real
 
+ls data/chime3/dt05_simu # all wavs are simulated (even if clean)
+# noise.wav.scp
+# clean.wav.scp
+# noisy.wav.scp
 
+make_dataset.sh data/chime3/dt05_simu
+# noise.wav.
 
 fc/train.py fc/mytraincase1-1809xx/param.json
 fc/print_mdl.py fc/mytraincase1-1809xx/model.pth
