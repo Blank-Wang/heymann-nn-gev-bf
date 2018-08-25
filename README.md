@@ -98,7 +98,7 @@ awk '{print $1,"ext/mixed/wsjcam0/si_et/clean/"$1".wav"}' ext/wsjcam0/si_et/wav.
 awk '{print $1,"ext/mixed/wsjcam0/si_tr/clean/"$1".wav"}' ext/wsjcam0/si_tr/wav.scp > ext/mixed/wsjcam0/si_tr/clean.scp
  
 for data in si_dt si_et si_tr; do
-  make_mixed_csv.py \
+  mylocal/make_mixed_csv.py \
     ext/wsjcam0/$data/wav.scp \
     ext/noise.scp \
     ext/mixed/wsjcam0/$data/clean.scp \
@@ -106,8 +106,14 @@ for data in si_dt si_et si_tr; do
     ext/mixed/wsjcam0/$data/mixed.csv # out file
 done
 
+# I made 165(x 8) cases of rir (each case corresponding to 8ch mic array)
+# rt60:(0.2, 0.4, 0.6, 0.8, 1.0) x azimuth(-90, -60, -30, 0, 30, 60, 90) x elevation(-90, -60, -30, 0, 30, 60, 90)
+
+# mylocal/make_rir.m # generate_mic_array_rir.m it's my lab's script. sorry...
+
+#
 for data in si_dt si_et si_tr; do
-  matlab -nodesktop -nosplash -r "make_reverb_imm_rir(ext/mixed/wsjcam0/$data/mixed.csv)"
+  mix.m ext/mixed/wsjcam0/$data/mixed.csv
 done
 
 in chime3... 
