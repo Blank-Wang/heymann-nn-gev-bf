@@ -2,14 +2,14 @@
 
 [his ppt on icassp 2016](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=3&ved=2ahUKEwi6h6Sw54bdAhWFZt4KHQJlCdAQFjACegQIBxAC&url=https%3A%2F%2Fsigport.org%2Fsites%2Fdefault%2Ffiles%2Ficassp_2016_1.pdf&usg=AOvVaw3DmQHWT8LFJNCLWhmyy-QB)
 
-### references
+### references, tools
 
 - [paper]()
 - [author's git repo](https://github.com/fgnt/nn-gev)
 - [A Well-Conditioned and Sparse Estimation of Covariance
 and Inverse Covariance Matrices Using a Joint Penalty](https://stt.msu.edu/users/mauryaas/Ashwini_JPEN.pdf)
 - [Xueliang's paper]()
-- [microsoft's paper]()
+- [xiong's paper]()
 - [google's paper]()
 - [higuchi's paper]()
 
@@ -21,19 +21,115 @@ and Inverse Covariance Matrices Using a Joint Penalty](https://stt.msu.edu/users
 - matlab
 
 ### tools
-- rir simulator(https://github.com/ehabets/RIR-Generator)
+- [AudioLabs's rir generator](https://github.com/ehabets/RIR-Generator)
+- (https://github.com/ehabets/RIR-Generator/blob/master/rir_generator.pdf)
+- [reverb challenge 2014 generator](https://reverb2014.dereverberation.com/download.html)
 - CHiME3's simulation code
+- gnu parallel
+- sox
+- https://kr.mathworks.com/matlabcentral/fileexchange/23573-csvimport
+
+
+### Installation
 
 ```sh
+cd your_kaldi/egs
+git clone git@github.com:gogyzzz/heymann-nn-gev-bf.git
+cd heymann-nn-gev-bf/s5
+```
+
+### Data preparation
+
+```sh
+source path.sh
+
+# preparation xiong paper's dataset (but I used noises from chime3 and reverb14 both)
+# training: simulated wsjcam0(kaldi reverb recipe) si_tr (8ch, 7861) (reverb_noise 0-30dB) (RT60 0.1-1.0s) 
+# dev: si_dt? maybe
+
+wsjcam0=mypath/LDC95S24/wsjcam0
+wsj0=mypath/LDC93S6B/11-13.1
+
+local/wsjcam0_data_prep.sh $wsjcam0 $wsj0
+
 # simulation with AudioLabs's image method rir
-make_clean_imm_rir.m rir/imm_clean.mat
-make_reverb_imm_rir.m rir/imm_reverb.mat
-simulate_noisy.m rir/imm_clean.mat data/wsjcam0/wav.scp data/imm_simu1
+
+mkdir -p ext/wsjcam0/si_{tr,dt,et}; 
+awk '{print $1,"ext/wsjcam0/si_tr/"$1".wav"}' data/local/data/si_tr_wav.scp > ext/wsjcam0/si_tr/wav.scp
+awk '{print $1,"ext/wsjcam0/si_dt/"$1".wav"}' data/local/data/si_dt_wav.scp > ext/wsjcam0/si_dt/wav.scp
+awk '{print $1,"ext/wsjcam0/si_et/"$1".wav"}' data/local/data/si_et_wav.scp > ext/wsjcam0/si_et/wav.scp
+
+wav-copy scp:data/local/data/si_tr_wav.scp scp:ext/wsjcam0/si_tr/wav.scp # maybe slow. parallelization needed
+wav-copy scp:data/local/data/si_dt_wav.scp scp:ext/wsjcam0/si_dt/wav.scp # maybe slow.
+wav-copy scp:data/local/data/si_et_wav.scp scp:ext/wsjcam0/si_et/wav.scp # maybe slow.
+
+imm_si_tr="ext/wsjcam0/si_tr/imm_simu"
+imm_si_dt="ext/wsjcam0/si_dt/imm_simu"
+imm_si_et="ext/wsjcam0/si_et/imm_simu"
+
+mkdir -p $imm_si_tr $imm_si_dt $imm_si_et; 
+awk -v dir="$imm_si_tr" '{print $1,dir"/"$1".wav"}' data/local/data/si_tr_wav.scp > $imm_si_tr/wav.scp
+awk -v dir="$imm_si_dt" '{print $1,dir"/"$1".wav"}' data/local/data/si_dt_wav.scp > $imm_si_dt/wav.scp
+awk -v dir="$imm_si_et" '{print $1,dir"/"$1".wav"}' data/local/data/si_et_wav.scp > $imm_si_et/wav.scp
+
+# prepare noise
+
+# convert reverb14 noise to 1ch
+noise=ext/reverb14/noise.scp
+noise_orig=ext/reverb14/noise_orig.scp
+paste -d ' ' $noise_orig $noise | parallel --colsep ' ' sox {} remix 1
+
+head -2 ext/*/noise.scp
+# ==> ext/chime3/noise.scp <==
+# ext/chime3/noise/BGD_150203_010_CAF.CH1.wav
+# ext/chime3/noise/BGD_150203_010_CAF.CH2.wav
+#
+# ==> ext/reverb14/noise.scp <==
+# ext/reverb14/noise/Noise_LargeRoom1_1.wav
+# ext/reverb14/noise/Noise_LargeRoom1_10.wav
+
+cat ext/*/noise.scp > ext/noise.scp
+
+awk '{print $1,"ext/mixed/wsjcam0/si_dt/noisy/"$1".wav"}' ext/wsjcam0/si_dt/wav.scp > ext/mixed/wsjcam0/si_dt/noisy.scp
+awk '{print $1,"ext/mixed/wsjcam0/si_et/noisy/"$1".wav"}' ext/wsjcam0/si_et/wav.scp > ext/mixed/wsjcam0/si_et/noisy.scp
+awk '{print $1,"ext/mixed/wsjcam0/si_tr/noisy/"$1".wav"}' ext/wsjcam0/si_tr/wav.scp > ext/mixed/wsjcam0/si_tr/noisy.scp
+awk '{print $1,"ext/mixed/wsjcam0/si_dt/clean/"$1".wav"}' ext/wsjcam0/si_dt/wav.scp > ext/mixed/wsjcam0/si_dt/clean.scp
+awk '{print $1,"ext/mixed/wsjcam0/si_et/clean/"$1".wav"}' ext/wsjcam0/si_et/wav.scp > ext/mixed/wsjcam0/si_et/clean.scp
+awk '{print $1,"ext/mixed/wsjcam0/si_tr/clean/"$1".wav"}' ext/wsjcam0/si_tr/wav.scp > ext/mixed/wsjcam0/si_tr/clean.scp
+ 
+for data in si_dt si_et si_tr; do
+  make_mixed_csv.py \
+    ext/wsjcam0/$data/wav.scp \
+    ext/noise.scp \
+    ext/mixed/wsjcam0/$data/clean.scp \
+    ext/mixed/wsjcam0/$data/noisy.scp \
+    ext/mixed/wsjcam0/$data/mixed.csv # out file
+done
+
+for data in si_dt si_et si_tr; do
+  matlab -nodesktop -nosplash -r "make_reverb_imm_rir(ext/mixed/wsjcam0/$data/mixed.csv)"
+done
+
+in chime3... 
+ ysimu=sqrt(SNR/sum(sum(ysimu.^2))*sum(sum(n.^2)))*ysimu;
+xsimu=ysimu+n;
+
+
+
+simulate_noisy.m rir/imm_clean.mat data/local/data/si_tr_wav.scp data/wsjcam0_si_tr
+simulate_noisy.m rir/imm_clean.mat data/local/data/si_dt_wav.scp data/wsjcam0_si_dt
+
+
+
+
 
 # chime3 simulation
+
+
+
 simulate_chime3.m mypath/CHiME3/data mystorage/CHiME3/data
 
-# heymann
+# heymann (same as xueliang maybe)
 # training: chime3 simulated training set (Clean, Noise) <- from modified CHiME3_simulate_data.m
 # dev: chime3 simulated dev set (Clean, Noise) <- from modified CHiME3_simulate_data.m
 
