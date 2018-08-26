@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# this code is modified version of 
+#  https://github.com/fgnt/nn-gev/blob/master/fgnt/signal_processing.py
+#  https://github.com/fgnt/nn-gev/blob/master/fgnt/mask_estimation.py
+
+
 import sys
 import librosa as rs
 import librosa.display as display
@@ -140,7 +145,6 @@ if __name__ == "__main__":
             y_axis='linear', x_axis='time',
             sr=16000)
         plt.title(title[i])
-    # plt.tight_layout()
 
     png = 'psd_ibm_%s.png'%(sys.argv[1].split('/')[-1].split('.')[0])
     print(png)
