@@ -101,26 +101,33 @@ for data in si_dt si_et si_tr; do
   mylocal/make_mixed_csv.py \
     ext/wsjcam0/$data/wav.scp \
     ext/noise.scp \
+    rir/iip/8ch_linear004_room500400300_center150200100_upfs1024000 \
     ext/mixed/wsjcam0/$data/clean.scp \
     ext/mixed/wsjcam0/$data/noisy.scp \
     ext/mixed/wsjcam0/$data/mixed.csv # out file
 done
 
-# I made 165(x 8) cases of rir (each case corresponding to 8ch mic array)
-# rt60:(0.2, 0.4, 0.6, 0.8, 1.0) x azimuth(-90, -60, -30, 0, 30, 60, 90) x elevation(-90, -60, -30, 0, 30, 60, 90)
+# I made 125(x 8) cases of rir (each case corresponding to 8ch mic array)
+# rt60:(0.2, 0.4, 0.6, 0.8, 1.0) x azimuth(-60, -30, 0, 30, 60) x elevation(150, 120, 90, 60, 30)
 
-# mylocal/make_rir.m # generate_mic_array_rir.m it's my lab's script. sorry...
-
-# note
-# add rir/iip/8ch*/ dir to mixed.csv and myloca/make_mixed_csv.py
-
-
-
-
-#
+# mylocal/make_rir.m # generate_mic_array_rir'm is my lab's script. sorry...
 for data in si_dt si_et si_tr; do
   mix.m ext/mixed/wsjcam0/$data/mixed.csv
 done
+
+? origScale of before filtered <-> maxScale ?
+? why noise isn't filtering ?
+? scaling with magnitude ?
+? why energyTarget = sqrt(sum(s{1,1}.^2)); energyInterference = sqrt(sum(interference.^2)); is energy?
+? why .. wsjcam0 is noisy
+
+
+# to do
+
+make filter cell -> mat
+modify filter{ } -> filter( )
+
+
 
 in chime3... 
  ysimu=sqrt(SNR/sum(sum(ysimu.^2))*sum(sum(n.^2)))*ysimu;
