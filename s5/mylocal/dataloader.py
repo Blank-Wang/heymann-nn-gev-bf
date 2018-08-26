@@ -38,7 +38,13 @@ class ibm_dataset(Dataset):
         y_psd, _, _, x_mask, n_mask = wav_to_ibm(
                 self.clean_id_wavs[idx][1], self.noisy_id_wavs[idx][1])
 
-        return y_psd, x_mask, n_mask
+        # (nbin x nframes) -> (nframes x nbin): nframes is batchsize
+        return \
+                tc.FloatTensor(y_psd.T), \
+                tc.FloatTensor(x_mask.T), \
+                tc.FloatTensor(n_mask.T)
+
+
 
 if __name__ == "__main__":
     from wav_to_ibm import wav_to_ibm 
