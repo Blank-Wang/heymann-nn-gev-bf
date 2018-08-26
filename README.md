@@ -126,6 +126,8 @@ done
 
 make filter cell -> mat
 modify filter{ } -> filter( )
+figure filtered signal is correct
+migrate this note. it's too long
 
 
 
