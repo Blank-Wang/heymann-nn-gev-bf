@@ -1,11 +1,14 @@
 #!/usr/bin/env python 
 
+import sys
 import numpy as np
 import torch as tc
 from torch.autograd import Variable
 from torch.utils.data import Dataset
 import csv
-from mylocal.wav_to_ibm import wav_to_ibm
+
+if __name__ != "__main__":
+    from mylocal.wav_to_ibm import wav_to_ibm
 
 class ibm_dataset(Dataset):
 
@@ -36,3 +39,11 @@ class ibm_dataset(Dataset):
                 self.clean_id_wavs[idx][1], self.noisy_id_wavs[idx][1])
 
         return y_psd, x_mask, n_mask
+
+if __name__ == "__main__":
+    from wav_to_ibm import wav_to_ibm 
+    # expected
+    # ibm_ds = ibm_dataset('sample/clean.scp','sample/noisy.scp')
+    ibm_ds = ibm_dataset(sys.argv[1], sys.argv[2])
+    print(ibm_ds[0])
+

@@ -52,4 +52,25 @@ matlab -nodesktop -nosplash -r \
 mylocal/prepare_chime3.sh
 
 ```
+
+### Data preparation 2
+
+
+
+```python
+
+# for pytorch dataset, dataloader
+
+def wav_to_ibm(clean, noisy, channel=-1):
+    return (y_psd, x_psd, n_psd, x_mask, n_mask)
+
+# psd normalization needed? -> no. just use batchnorm
+
+
+
+
+
+```
+
+
 ### Exp. results
