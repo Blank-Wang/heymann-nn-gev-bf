@@ -3,12 +3,12 @@
 import sys
 import numpy as np
 import torch as tc
-from torch.autograd import Variable
 from torch.utils.data import Dataset
 import csv
 
-if __name__ != "__main__":
-    from mylocal.wav_to_ibm import wav_to_ibm
+from wav_to_ibm import wav_to_ibm 
+#if __name__ != "__main__":
+#    from mylocal.wav_to_ibm import wav_to_ibm
 
 class ibm_dataset(Dataset):
 
@@ -26,8 +26,8 @@ class ibm_dataset(Dataset):
         # check id
         for cid, nid in zip(self.clean_id_wavs, self.noisy_id_wavs):
             if cid[0] != nid[0]:
-                print('in %s and %s'%(clean_wavs_path, noisy_wavs_path))
-                print('%s != %s'%(cid,nid))
+                #print('in %s and %s'%(clean_wavs_path, noisy_wavs_path))
+                #print('%s != %s'%(cid,nid))
                 return
 
     def __len__(self):
@@ -37,8 +37,11 @@ class ibm_dataset(Dataset):
 
         y_psd, _, _, x_mask, n_mask = wav_to_ibm(
                 self.clean_id_wavs[idx][1], self.noisy_id_wavs[idx][1])
+        #print(np.shape(y_psd))
+        #print(np.shape(x_mask))
 
         # (nbin x nframes) -> (nframes x nbin): nframes is batchsize
+        ##print(np.shape(tc.FloatTensor(y_psd.T)))
         return \
                 tc.FloatTensor(y_psd.T), \
                 tc.FloatTensor(x_mask.T), \
@@ -47,9 +50,8 @@ class ibm_dataset(Dataset):
 
 
 if __name__ == "__main__":
-    from wav_to_ibm import wav_to_ibm 
     # expected
     # ibm_ds = ibm_dataset('sample/clean.scp','sample/noisy.scp')
     ibm_ds = ibm_dataset(sys.argv[1], sys.argv[2])
-    print(ibm_ds[0])
+    #print(ibm_ds[0])
 

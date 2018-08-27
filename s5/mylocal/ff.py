@@ -8,14 +8,14 @@ from torch.autograd import Variable
 
 def init_linear(m):
     if type(m) == nn.Linear:
-        tc.nn.init.xavier_normal(m.weight)
-        nn.init.constant(m.bias, 0)
+        tc.nn.init.xavier_normal_(m.weight)
+        nn.init.constant_(m.bias, 0)
 
-class dnn(nn.Module):
+class ff_mask_estimator(nn.Module):
     
     def __init__(self, nbin=513, nhid=513):
 
-        super(dnn, self).__init__()
+        super(ff_mask_estimator, self).__init__()
 
         self.fc1 = nn.Linear(nbin, nhid)
         self.bn1 = nn.BatchNorm1d(nhid)
@@ -31,14 +31,44 @@ class dnn(nn.Module):
 
         self.apply(init_linear)
 
-    def forward(self, y_psd, x_mask, n_mask):
+    def forward(self, y_psd):
 
         relu1 = F.relu(self.fc1(y_psd))
-        return F.sigmoid(self.s_mask_estimate(relu1)), \
-            F.sigmoid(self.n_mask_estimate(relu1))
+        ##print(np.shape(relu1))
+        return tc.sigmoid(self.s_mask_estimate(relu1)), \
+            tc.sigmoid(self.n_mask_estimate(relu1))
 
 if __name__ == "__main__":
-    from wav_to_ibm import wav_to_ibm
     from dataloader import ibm_dataset
+    from torch.utils.data import DataLoader
+    import torch as tc
+    import torch.nn as nn
+    import numpy as np
+    from tqdm import tqdm 
+    
+    dataset = ibm_dataset('sample/clean.scp', 'sample/noisy.scp')
+    dataloader = DataLoader(dataset, 1, num_workers=1)
 
+    ff = ff_mask_estimator()
+    optim = tc.optim.RMSprop(ff.parameters(), lr=0.001, momentum=0.9)
 
+    for i in range(25):
+        for y_psd, x_mask, n_mask in tqdm(dataloader, total=len(dataset)):
+
+            y_psd = tc.squeeze(y_psd)
+            x_mask = Variable(tc.squeeze(x_mask))
+            n_mask = Variable(tc.squeeze(n_mask))
+
+            x_mask_hat, n_mask_hat = ff(y_psd)
+
+            optim.zero_grad()
+            #print(np.shape(y_psd))
+            #print(np.shape(x_mask))
+            #print(np.shape(x_mask_hat))
+            x_loss = F.binary_cross_entropy(x_mask_hat, x_mask)
+            n_loss = F.binary_cross_entropy(n_mask_hat, n_mask)
+            loss = x_loss + n_loss
+
+            loss.backward()
+            optim.step()
+            print(loss.data)

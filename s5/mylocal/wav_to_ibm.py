@@ -64,8 +64,8 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     clean, sr = rs.load(clean_wav_path,sr=16000, mono=False)
     noisy, sr = rs.load(noisy_wav_path,sr=16000, mono=False)
 
-    print(np.max(clean))
-    print(np.max(noisy))
+    #print(np.max(clean))
+    #print(np.max(noisy))
 
     # concat channel
     if channel == -1:
@@ -75,8 +75,8 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
         clean = clean[channel, :]
         noisy = noisy[channel, :]
 
-    print(np.shape(clean))
-    print(np.shape(noisy))
+    #print(np.shape(clean))
+    #print(np.shape(noisy))
 
     # |x|^2 = Power-Spectral-Density
     x = rs.stft(clean, n_fft=1024)
@@ -88,9 +88,9 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     n = y - x
     n_psd = n * n.conjugate()
 
-    print(np.shape(x_psd))
-    print(np.shape(n_psd))
-    print(np.shape(y_psd))
+    #print(np.shape(x_psd))
+    #print(np.shape(n_psd))
+    #print(np.shape(y_psd))
     
     (voiced, unvoiced) = _voiced_unvoiced_split_characteristic(x.shape[0])
 
@@ -118,12 +118,12 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     n_mask[0: low_cut - 1, ...] = 1
     n_mask[high_cut: len(n_mask[0]), ...] = 1
 
-    print(np.shape(x_mask))
-    print(np.shape(n_mask))
+    #print(np.shape(x_mask))
+    #print(np.shape(n_mask))
 
-    return (y_psd.astype(np.float32), 
-            x_psd.astype(np.float32), 
-            n_psd.astype(np.float32), 
+    return (y_psd.real, 
+            x_psd.real, 
+            n_psd.real, 
             x_mask.astype(np.float32), 
             n_mask.astype(np.float32))
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=[8, 8])
     for i in range(4):
-        print(np.shape(data[i]))
+        #print(np.shape(data[i]))
         plt.subplot(2, 2, i+1)
         data[i] = data[i].astype(float)
         display.specshow(rs.amplitude_to_db(
@@ -147,5 +147,5 @@ if __name__ == "__main__":
         plt.title(title[i])
 
     png = 'psd_ibm_%s.png'%(sys.argv[1].split('/')[-1].split('.')[0])
-    print(png)
+    #print(png)
     fig.savefig(png)
