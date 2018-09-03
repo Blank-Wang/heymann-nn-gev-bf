@@ -33,7 +33,7 @@ class ff_mask_estimator(nn.Module):
 
     def forward(self, y_psd):
 
-        relu1 = F.relu(self.fc1(y_psd))
+        relu1 = F.relu(self.bn1(self.fc1(y_psd)))
         ##print(np.shape(relu1))
         return tc.sigmoid(self.s_mask_estimate(relu1)), \
             tc.sigmoid(self.n_mask_estimate(relu1))
@@ -45,6 +45,7 @@ if __name__ == "__main__":
     import torch.nn as nn
     import numpy as np
     from tqdm import tqdm 
+
     
     dataset = ibm_dataset('sample/clean.scp', 'sample/noisy.scp')
     dataloader = DataLoader(dataset, 1, num_workers=1)
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     ff = ff_mask_estimator()
     optim = tc.optim.RMSprop(ff.parameters(), lr=0.001, momentum=0.9)
 
-    for i in range(25):
+    for i in range(10):
         for y_psd, x_mask, n_mask in tqdm(dataloader, total=len(dataset)):
 
             y_psd = tc.squeeze(y_psd)
@@ -71,4 +72,4 @@ if __name__ == "__main__":
 
             loss.backward()
             optim.step()
-            print(loss.data)
+            print(loss.data[0])

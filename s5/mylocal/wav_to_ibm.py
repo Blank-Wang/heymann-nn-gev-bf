@@ -64,9 +64,11 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     clean, sr = rs.load(clean_wav_path,sr=16000, mono=False)
     noisy, sr = rs.load(noisy_wav_path,sr=16000, mono=False)
 
-    #print(np.max(clean))
-    #print(np.max(noisy))
+    print(np.max(clean))
+    print(np.max(noisy))
 
+    print(np.shape(clean))
+    print(np.shape(noisy))
     # concat channel
     if channel == -1:
         clean = np.reshape(clean,(-1,))
@@ -75,8 +77,8 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
         clean = clean[channel, :]
         noisy = noisy[channel, :]
 
-    #print(np.shape(clean))
-    #print(np.shape(noisy))
+    print(np.shape(clean))
+    print(np.shape(noisy))
 
     # |x|^2 = Power-Spectral-Density
     x = rs.stft(clean, n_fft=1024)
@@ -88,9 +90,9 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     n = y - x
     n_psd = n * n.conjugate()
 
-    #print(np.shape(x_psd))
-    #print(np.shape(n_psd))
-    #print(np.shape(y_psd))
+    print(np.shape(x_psd))
+    print(np.shape(n_psd))
+    print(np.shape(y_psd))
     
     (voiced, unvoiced) = _voiced_unvoiced_split_characteristic(x.shape[0])
 
