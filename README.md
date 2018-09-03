@@ -29,6 +29,14 @@ and Inverse Covariance Matrices Using a Joint Penalty](https://stt.msu.edu/users
 - sox
 - https://kr.mathworks.com/matlabcentral/fileexchange/23573-csvimport
 
+#### to do
+- print (avg, max, median) of L2 norm
+- gev BF
+- add timer(of 
+- MVDR BF
+- PESQ
+- SNR
+- F-score for each bin
 
 ### Installation
 

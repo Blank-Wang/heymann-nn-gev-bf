@@ -45,7 +45,9 @@ class ibm_dataset(Dataset):
         return \
                 tc.FloatTensor(y_psd.T), \
                 tc.FloatTensor(x_mask.T), \
-                tc.FloatTensor(n_mask.T)
+                tc.FloatTensor(n_mask.T), \
+                [self.noisy_id_wavs[new_idx-i][1] for i in range(self.nch)], \
+                [self.clean_id_wavs[new_idx-i][1] for i in range(self.nch)]
 
 # it expects (default: 6ch) 
 # A_CH1 /mypath/A.CH1.wav
@@ -103,7 +105,10 @@ class ibm_dataset_nch(Dataset):
         return \
                 tc.FloatTensor(np.array(y_psds)), \
                 tc.FloatTensor(np.array(x_masks)), \
-                tc.FloatTensor(np.array(n_masks))
+                tc.FloatTensor(np.array(n_masks)), \
+                [self.noisy_id_wavs[new_idx-i][1] for i in range(self.nch)], \
+                [self.clean_id_wavs[new_idx-i][1] for i in range(self.nch)]
+
 
 if __name__ == "__main__":
     # expected
@@ -116,9 +121,13 @@ if __name__ == "__main__":
     print(np.shape(tmp[0]))
     print(np.shape(tmp[1]))
     print(np.shape(tmp[2]))
+    print(tmp[3])
+    print(tmp[4])
+
 
     tmp = ibm_ds[1]
     print(np.shape(tmp[0]))
     print(np.shape(tmp[1]))
     print(np.shape(tmp[2]))
-
+    print(tmp[3])
+    print(tmp[4])

@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     epoch = 0 # start epoch idx
     best_epoch = 0
-    max_epochs = 5
-    patience = 2
+    max_epochs = 2
+    patience = 10
 
     isgpu = True
 
@@ -77,10 +77,11 @@ if __name__ == "__main__":
     optim = tc.optim.RMSprop(ff.parameters(), lr=0.001, momentum=0.9)
 
     mindevloss = 999999
+    best_state_dic = {}
 
     while (epoch < max_epochs and epoch - best_epoch < patience):
 
-        for y_psd, x_mask, n_mask in tqdm(trainloader, total=len(trainset)):
+        for y_psd, x_mask, n_mask, *dummy in tqdm(trainloader, total=len(trainset)):
 
             y_psd = y_psd.reshape((-1,513))
             x_mask = x_mask.reshape((-1,513))
@@ -105,41 +106,57 @@ if __name__ == "__main__":
 
             trainloss = loss.item()
 
-            # validation
+        # validation
             
-            devlosses = []
+        devlosses = []
 
-            for y_psd, x_mask, n_mask in tqdm(devloader, total=len(devset)):
+        for y_psd, x_mask, n_mask, *dummy in tqdm(devloader, total=len(devset)):
                 
-                y_psd = y_psd.reshape((-1,513))
-                x_mask = x_mask.reshape((-1,513))
-                n_mask = n_mask.reshape((-1,513))
-                x_mask_hat, n_mask_hat = ff(y_psd)
-                x_loss = F.binary_cross_entropy(x_mask_hat, x_mask)
-                n_loss = F.binary_cross_entropy(n_mask_hat, n_mask)
-                loss = x_loss + n_loss
+            y_psd = y_psd.reshape((-1,513))
+            x_mask = x_mask.reshape((-1,513))
+            n_mask = n_mask.reshape((-1,513))
+            x_mask_hat, n_mask_hat = ff(y_psd)
+            x_loss = F.binary_cross_entropy(x_mask_hat, x_mask)
+            n_loss = F.binary_cross_entropy(n_mask_hat, n_mask)
+            loss = x_loss + n_loss
                 
-                devlosses.append(loss.item())
+            devlosses.append(loss.item())
                 
 
-            avgdevloss = np.average(np.array(devlosses))
+        avgdevloss = np.average(np.array(devlosses))
             
-            if avgdevloss < mindevloss:
-                mindevloss = avgdevloss
-                best_epoch = epoch
-                print('[%03d/%03d] best dev loss ever!\n'%(epoch, max_epochs))
-                best_state_dic = ff.state_dict()
+        ff_state_dic = ff.state_dict()
+        #print(ff_state_dic.keys())
 
-            devlossmsg = '[%03d/%03d] trainloss: %.3f'%(epoch,max_epochs,avgdevloss)
-            trainlossmsg = '[%03d/%03d] devloss: %.3f'%(epoch,max_epochs,trainloss)
+        if avgdevloss < mindevloss:
+            mindevloss = avgdevloss
+            best_epoch = epoch
+            print('[%03d/%03d] best dev loss ever!\n'%(epoch, max_epochs))
+            best_state_dic = ff_state_dic
 
-            print(trainlossmsg,'\n')
-            print(devlossmsg,'\n')
+        devlossmsg = '[%03d/%03d] trainloss: %.3f'%(epoch,max_epochs,avgdevloss)
+        trainlossmsg = '[%03d/%03d] devloss: %.3f'%(epoch,max_epochs,trainloss)
+        fc1_norm_msg = '[%03d/%03d] fc1 norm: %.3f'%(
+                epoch,max_epochs,best_state_dic['fc1.weight'].norm())
+        s_outlayer_norm_msg = '[%03d/%03d] s_out_layer norm: %.3f'%(
+                epoch,max_epochs,best_state_dic['s_mask_estimate.weight'].norm())
+        n_outlayer_norm_msg = '[%03d/%03d] n_out_layer norm: %.3f'%(
+                epoch,max_epochs,best_state_dic['n_mask_estimate.weight'].norm())
 
-            os.system('echo %s >> %s'%(devlossmsg, logpath))
-            os.system('echo %s >> %s'%(trainlossmsg, logpath))
+        print(devlossmsg)
+        print(trainlossmsg)
+        print(fc1_norm_msg)
+        print(s_outlayer_norm_msg)
+        print(n_outlayer_norm_msg)
 
-            epoch += 1 
+        with open(logpath, 'a') as f:
+            print(devlossmsg, file=f)
+            print(trainlossmsg, file=f)
+            print(fc1_norm_msg, file=f)
+            print(s_outlayer_norm_msg, file=f)
+            print(n_outlayer_norm_msg, file=f)
+
+        epoch += 1 
 
     tc.save(best_state_dic, expdir + '/best_state_dic.pth')
     os.system('ls %s'%(expdir))
