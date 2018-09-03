@@ -40,25 +40,55 @@ class ff_mask_estimator(nn.Module):
 
 if __name__ == "__main__":
     from dataloader import ibm_dataset
+    from dataloader import ibm_dataset_nch
     from torch.utils.data import DataLoader
     import torch as tc
     import torch.nn as nn
     import numpy as np
     from tqdm import tqdm 
-
+    import datetime as dt
+    import os
     
-    dataset = ibm_dataset('sample/clean.scp', 'sample/noisy.scp')
-    dataloader = DataLoader(dataset, 1, num_workers=1)
+    nowtime = dt.datetime.now().strftime('%m%d%H%M%S')
+    expdir = 'exp_' + nowtime
+    logpath = expdir + '/' + 'log'
+    print('expdir:',expdir)
+    os.system('mkdir %s'%(expdir))
 
-    ff = ff_mask_estimator()
+
+    epoch = 0 # start epoch idx
+    best_epoch = 0
+    max_epochs = 5
+    patience = 2
+
+    isgpu = True
+
+    #dataset = ibm_dataset('sample/clean.scp', 'sample/noisy.scp')
+    trainset = ibm_dataset_nch('sample/clean.6ch.scp', 'sample/noisy.6ch.scp')
+    devset = ibm_dataset_nch('sample/clean.6ch.scp', 'sample/noisy.6ch.scp')
+
+    trainloader = DataLoader(trainset, 1, num_workers=1, 
+            drop_last=True, pin_memory=isgpu)
+    devloader = DataLoader(trainset, 1, num_workers=1,
+            drop_last=True, pin_memory=isgpu)
+
+    ff = ff_mask_estimator() if isgpu else ff_mask_estimator.to_gpu()
+
     optim = tc.optim.RMSprop(ff.parameters(), lr=0.001, momentum=0.9)
 
-    for i in range(10):
-        for y_psd, x_mask, n_mask in tqdm(dataloader, total=len(dataset)):
+    mindevloss = 999999
 
-            y_psd = tc.squeeze(y_psd)
-            x_mask = Variable(tc.squeeze(x_mask))
-            n_mask = Variable(tc.squeeze(n_mask))
+    while (epoch < max_epochs and epoch - best_epoch < patience):
+
+        for y_psd, x_mask, n_mask in tqdm(trainloader, total=len(trainset)):
+
+            y_psd = y_psd.reshape((-1,513))
+            x_mask = x_mask.reshape((-1,513))
+            n_mask = n_mask.reshape((-1,513))
+
+            #y_psd = tc.squeeze(y_psd)
+            #x_mask = Variable(tc.squeeze(x_mask))
+            #n_mask = Variable(tc.squeeze(n_mask))
 
             x_mask_hat, n_mask_hat = ff(y_psd)
 
@@ -72,4 +102,44 @@ if __name__ == "__main__":
 
             loss.backward()
             optim.step()
-            print(loss.data[0])
+
+            trainloss = loss.item()
+
+            # validation
+            
+            devlosses = []
+
+            for y_psd, x_mask, n_mask in tqdm(devloader, total=len(devset)):
+                
+                y_psd = y_psd.reshape((-1,513))
+                x_mask = x_mask.reshape((-1,513))
+                n_mask = n_mask.reshape((-1,513))
+                x_mask_hat, n_mask_hat = ff(y_psd)
+                x_loss = F.binary_cross_entropy(x_mask_hat, x_mask)
+                n_loss = F.binary_cross_entropy(n_mask_hat, n_mask)
+                loss = x_loss + n_loss
+                
+                devlosses.append(loss.item())
+                
+
+            avgdevloss = np.average(np.array(devlosses))
+            
+            if avgdevloss < mindevloss:
+                mindevloss = avgdevloss
+                best_epoch = epoch
+                print('[%03d/%03d] best dev loss ever!\n'%(epoch, max_epochs))
+                best_state_dic = ff.state_dict()
+
+            devlossmsg = '[%03d/%03d] trainloss: %.3f'%(epoch,max_epochs,avgdevloss)
+            trainlossmsg = '[%03d/%03d] devloss: %.3f'%(epoch,max_epochs,trainloss)
+
+            print(trainlossmsg,'\n')
+            print(devlossmsg,'\n')
+
+            os.system('echo %s >> %s'%(devlossmsg, logpath))
+            os.system('echo %s >> %s'%(trainlossmsg, logpath))
+
+            epoch += 1 
+
+    tc.save(best_state_dic, expdir + '/best_state_dic.pth')
+    os.system('ls %s'%(expdir))
