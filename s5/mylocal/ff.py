@@ -31,9 +31,9 @@ class ff_mask_estimator(nn.Module):
 
         self.apply(init_linear)
 
-    def forward(self, y_psd):
+    def forward(self, y_abs):
 
-        relu1 = F.relu(self.bn1(self.fc1(y_psd)))
+        relu1 = F.relu(self.bn1(self.fc1(y_abs)))
         ##print(np.shape(relu1))
         return tc.sigmoid(self.s_mask_estimate(relu1)), \
             tc.sigmoid(self.n_mask_estimate(relu1))
@@ -81,9 +81,9 @@ if __name__ == "__main__":
 
     while (epoch < max_epochs and epoch - best_epoch < patience):
 
-        for y_psd, x_mask, n_mask, *dummy in tqdm(trainloader, total=len(trainset)):
+        for y_abs, x_mask, n_mask, *dummy in tqdm(trainloader, total=len(trainset)):
 
-            y_psd = y_psd.reshape((-1,513))
+            y_abs = y_abs.reshape((-1,513))
             x_mask = x_mask.reshape((-1,513))
             n_mask = n_mask.reshape((-1,513))
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
             #x_mask = Variable(tc.squeeze(x_mask))
             #n_mask = Variable(tc.squeeze(n_mask))
 
-            x_mask_hat, n_mask_hat = ff(y_psd)
+            x_mask_hat, n_mask_hat = ff(y_abs)
 
             optim.zero_grad()
             #print(np.shape(y_psd))
@@ -110,12 +110,12 @@ if __name__ == "__main__":
             
         devlosses = []
 
-        for y_psd, x_mask, n_mask, *dummy in tqdm(devloader, total=len(devset)):
+        for y_abs, x_mask, n_mask, *dummy in tqdm(devloader, total=len(devset)):
                 
-            y_psd = y_psd.reshape((-1,513))
+            y_abs = y_abs.reshape((-1,513))
             x_mask = x_mask.reshape((-1,513))
             n_mask = n_mask.reshape((-1,513))
-            x_mask_hat, n_mask_hat = ff(y_psd)
+            x_mask_hat, n_mask_hat = ff(y_abs)
             x_loss = F.binary_cross_entropy(x_mask_hat, x_mask)
             n_loss = F.binary_cross_entropy(n_mask_hat, n_mask)
             loss = x_loss + n_loss

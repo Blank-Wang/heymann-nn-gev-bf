@@ -85,7 +85,7 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     x_psd = x * x.conjugate()
 
     y = rs.stft(noisy, n_fft=1024)
-    y_psd = y * y.conjugate()
+    #y_psd = y * y.conjugate()
 
     n = y - x
     n_psd = n * n.conjugate()
@@ -123,7 +123,7 @@ def wav_to_ibm(clean_wav_path, noisy_wav_path,
     #print(np.shape(x_mask))
     #print(np.shape(n_mask))
 
-    return (y_psd.real, 
+    return (y, 
             x_psd.real, 
             n_psd.real, 
             x_mask.astype(np.float32), 

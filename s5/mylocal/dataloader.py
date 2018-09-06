@@ -35,15 +35,15 @@ class ibm_dataset(Dataset):
 
     def __getitem__(self, idx):
 
-        y_psd, _, _, x_mask, n_mask = wav_to_ibm(
+        y, _, _, x_mask, n_mask = wav_to_ibm(
                 self.clean_id_wavs[idx][1], self.noisy_id_wavs[idx][1])
-        #print(np.shape(y_psd))
+        #print(np.shape(y))
         #print(np.shape(x_mask))
 
-        # (nbin x nframes) -> (nframes x nbin): nframes is batchsize
-        ##print(np.shape(tc.FloatTensor(y_psd.T)))
+        # (nbin x nframe) -> (nframe x nbin): nframe is batchsize
+        ##print(np.shape(tc.FloatTensor(y.T)))
         return \
-                tc.FloatTensor(y_psd.T), \
+                tc.FloatTensor(y.T), \
                 tc.FloatTensor(x_mask.T), \
                 tc.FloatTensor(n_mask.T), \
                 [self.noisy_id_wavs[new_idx-i][1] for i in range(self.nch)], \
@@ -86,36 +86,38 @@ class ibm_dataset_nch(Dataset):
 
     def __getitem__(self, idx):
 
-        y_psds = []
-        x_masks = []
-        n_masks = []
+        y_abs_list = []
+        x_mask_list = []
+        n_mask_list = []
 
         for i in range(self.nch):
             new_idx = np.uint32(idx * self.nch + i)
-            y_psd, _, _, x_mask, n_mask = wav_to_ibm(
-                self.clean_id_wavs[new_idx][1], self.noisy_id_wavs[new_idx][1])
-            y_psds.append(y_psd.T) # y_psd.T: [nframes x nbin]
-            x_masks.append(x_mask.T)
-            n_masks.append(n_mask.T)
+            y, _, _, x_mask, n_mask = wav_to_ibm(
+                self.clean_id_wavs[new_idx][1], self.noisy_id_wavs[new_idx][1],
+                channel=1)
+            y_abs_list.append(np.abs(y.T)) # y.T: [nframe x nbin]
+            x_mask_list.append(x_mask.T)
+            n_mask_list.append(n_mask.T)
 
-        #print(np.shape(np.array(y_psds))) # expect [nch x nframes x nbin]
-        #print(np.shape(y_psd))
+        print(np.shape(np.array(y_abs_list))) # expect [nch x nframe x nbin]
+        print(np.shape(y))
         #print(np.shape(x_mask))
 
+
         return \
-                tc.FloatTensor(np.array(y_psds)), \
-                tc.FloatTensor(np.array(x_masks)), \
-                tc.FloatTensor(np.array(n_masks)), \
+                tc.FloatTensor(np.array(y_abs_list)), \
+                tc.FloatTensor(np.array(x_mask_list)), \
+                tc.FloatTensor(np.array(n_mask_list)), \
                 [self.noisy_id_wavs[new_idx-i][1] for i in range(self.nch)], \
                 [self.clean_id_wavs[new_idx-i][1] for i in range(self.nch)]
 
-
 if __name__ == "__main__":
     # expected
-    # ibm_ds = ibm_dataset('sample/clean.scp','sample/noisy.scp')
+    #ibm_ds = ibm_dataset('sample/clean.scp','sample/noisy.scp')
+    ibm_ds = ibm_dataset_nch('sample/clean.6ch.scp','sample/noisy.6ch.scp')
     #ibm_ds = ibm_dataset(sys.argv[1], sys.argv[2])
-    ibm_ds = ibm_dataset_nch('ext/chime3/div4/dt05_clean.scp',
-            'ext/chime3/div4/dt05_noisy.scp')
+    #ibm_ds = ibm_dataset_nch('ext/chime3/div4/dt05_clean.scp',
+    #        'ext/chime3/div4/dt05_noisy.scp')
     
     tmp = ibm_ds[0]
     print(np.shape(tmp[0]))

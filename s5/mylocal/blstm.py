@@ -40,12 +40,12 @@ class blstm_mask_estimator(nn.Module):
 
         self.apply(init_linear)
 
-    def forward(self, y_psd):
+    def forward(self, y_abs):
 
         # bsz: 1
-        y_psd = tc.reshape(y_psd, (1, -1, self.nbin))
-        #print(np.shape(y_psd))
-        blstm1, hn = self.blstm1(y_psd)
+        y_abs = tc.reshape(y_abs, (1, -1, self.nbin))
+        #print(np.shape(y_abs))
+        blstm1, hn = self.blstm1(y_abs)
         #print(np.shape(blstm1))
 
         # squeeze needed. [1, -1, 2*ncell] -> [-1, 2*ncell]
@@ -71,18 +71,18 @@ if __name__ == "__main__":
     optim = tc.optim.RMSprop(model.parameters(), lr=0.001, momentum=0.9)
 
     for i in range(1):
-        for y_psd, x_mask, n_mask in tqdm(dataloader, total=len(dataset)):
+        for y_abs, x_mask, n_mask, *dummy in tqdm(dataloader, total=len(dataset)):
 
             # due to batchsize(1) != number of frames
-            y_psd = tc.squeeze(y_psd)
+            y_abs = tc.squeeze(y)
             x_mask = tc.squeeze(x_mask)
             n_mask = tc.squeeze(n_mask)
 
-            print(np.shape(y_psd))
+            print(np.shape(y_abs))
             print(np.shape(x_mask))
             continue
 
-            x_mask_hat, n_mask_hat = model(y_psd)
+            x_mask_hat, n_mask_hat = model(y_abs)
 
             optim.zero_grad()
             #print(np.shape(x_mask_hat))

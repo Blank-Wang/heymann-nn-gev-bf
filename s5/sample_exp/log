@@ -1,0 +1,10 @@
+[000/002] trainloss: 1.137
+[000/002] devloss: 1.637
+[000/002] fc1 norm: 24.890
+[000/002] s_out_layer norm: 23.896
+[000/002] n_out_layer norm: 24.436
+[001/002] trainloss: 1.006
+[001/002] devloss: 1.457
+[001/002] fc1 norm: 30.501
+[001/002] s_out_layer norm: 26.371
+[001/002] n_out_layer norm: 28.948
